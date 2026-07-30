@@ -78,7 +78,8 @@ static bool BuildDiffString(const DailyUpdateSnapshot &before, const DailyUpdate
 
     if (before.money != after.money)
     {
-        differences << " money:" << before.money << "->" << after.money;
+        int delta = after.money - before.money;
+        differences << " money:" << before.money << "->" << after.money << " (delta=" << delta << ")";
         anyChanged = true;
     }
     if (before.stealthMode != after.stealthMode)
@@ -123,17 +124,21 @@ static bool BuildDiffString(const DailyUpdateSnapshot &before, const DailyUpdate
     }
     if (before.frameTime != after.frameTime)
     {
-        differences << " frameTime:" << before.frameTime << "->" << after.frameTime;
+        int delta = static_cast<int>(after.frameTime - before.frameTime);
+        differences << " frameTime:" << before.frameTime << "->" << after.frameTime << " (delta=" << delta << ")";
         anyChanged = true;
     }
     if (before.lightLevel != after.lightLevel)
     {
-        differences << " lightLevel:" << before.lightLevel << "->" << after.lightLevel;
+        int delta = static_cast<int>(after.lightLevel - before.lightLevel);
+        differences << " lightLevel:" << before.lightLevel << "->" << after.lightLevel << " (delta=" << delta << ")";
         anyChanged = true;
     }
     if (before.terrainHeightPosition != after.terrainHeightPosition)
     {
-        differences << " terrainHeight:" << before.terrainHeightPosition << "->" << after.terrainHeightPosition;
+        int delta = static_cast<int>(after.terrainHeightPosition - before.terrainHeightPosition);
+        differences << " terrainHeight:" << before.terrainHeightPosition << "->" << after.terrainHeightPosition
+                    << " (delta=" << delta << ")";
         anyChanged = true;
     }
     if (before.armourType != after.armourType)
@@ -186,7 +191,8 @@ LogDailyUpdateCharacterDiff(Character *character, const DailyUpdateSnapshot &bef
     {
         std::stringstream message;
         message << "[DAILYUPDATE DIFF] "
-                << "name=\"" << character->getName() << "\"" << diffString << " wages=" << wagesValue
+                << "name=\"" << character->getName() << "\""
+                << " id=\"" << character->getHandle().toString() << "\"" << diffString << " wages=" << wagesValue
                 << " moneyMin=" << moneyMin << " moneyMax=" << moneyMax;
         DebugLog(message.str().c_str());
         ++changedCharacterCount;
@@ -196,6 +202,7 @@ LogDailyUpdateCharacterDiff(Character *character, const DailyUpdateSnapshot &bef
         std::stringstream message;
         message << "[DAILYUPDATE NODIFF] "
                 << "name=\"" << character->getName() << "\""
+                << " id=\"" << character->getHandle().toString() << "\""
                 << " money=" << afterSnapshot.money << " wages=" << wagesValue << " moneyMin=" << moneyMin
                 << " moneyMax=" << moneyMax;
         DebugLog(message.str().c_str());
@@ -355,6 +362,7 @@ static void LogHotkeys()
             std::stringstream message;
             message << "CTRL+T: "
                     << "name=\"" << selectedCharacter->getName() << "\" "
+                    << "id=\"" << selectedCharacter->getHandle().toString() << "\" "
                     << "money=" << currentMoney << " "
                     << "wages=" << wagesValue << " "
                     << "moneyMin=" << moneyMin << " "
@@ -381,6 +389,7 @@ static void LogHotkeys()
             std::stringstream message;
             message << "CTRL+SHIFT+T: "
                     << "name=\"" << selectedCharacter->getName() << "\" "
+                    << "id=\"" << selectedCharacter->getHandle().toString() << "\" "
                     << "before=" << moneyBefore << " "
                     << "gave=2000 "
                     << "after=" << moneyAfter;
