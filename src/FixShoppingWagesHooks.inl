@@ -13,6 +13,12 @@ void GameWorld_dailyUpdates_hook(GameWorld *thisWorld)
     if (kVerboseDebugLogging) { LogDailyUpdatesStart(thisWorld); }
 
     GameWorld_dailyUpdates_originalFunction(thisWorld);
+    // NOTE for others reading this:
+    //  The original GameWorld::dailyUpdates() function does not call the Character::dailyUpdate() function.
+    //  We intentionally do not call the character dailyUpdate() function as well, since it overwrites the characters
+    //  money by their set wage instead of adding to it. In other words, anyone with a set wage will have their money
+    //  overwritten by the dailyUpdate() function, which is not what we want. It also ruins the vendors in the game,
+    //  rendering them close to broke.
 
     // Resolve universal wage on first daily update that finds Dried Meat
     const int driedMeatDefaultPrice = 78;
