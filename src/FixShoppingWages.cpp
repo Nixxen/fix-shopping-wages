@@ -97,18 +97,34 @@ static void GiveDailyWage(
     Character *character, int fallbackWage, int &changedCharacterCount, const DailyUpdateSnapshot &beforeSnapshot
 )
 {
-    int wages = LookupGameDataInteger(character->data, "wages", 0);
+    int wages = LookupGameDataInteger(character->data, "wages", -1);
+
+    if (wages == -1)
+    {
+        // The character either has a sentinel value of -1 for wages, or the "wages" key is missing from their
+        // GameData entirely. In either case, we do not give them any money.
+        return;
+    }
 
     if (wages == 0)
     {
+        int maxMoney = LookupGameDataInteger(character->data, "money max", -1);
+        if (maxMoney == -1)
+        {
+            // The character either has a sentinel value of -1 for money max, or the "money max" key is missing from
+            // their GameData entirely. In either case, we do not give them any money.
+            return;
+        }
+
         int minMoney = LookupGameDataInteger(character->data, "money min", 0);
-        int maxMoney = LookupGameDataInteger(character->data, "money max", 0);
         if (maxMoney > minMoney) { wages = minMoney + (std::rand() % (maxMoney - minMoney + 1)); }
         if (wages == 0) { wages = fallbackWage; }
     }
 
     int currentMoney = character->getMoney();
-    // NOTE: For characters without a fixed wage, this may fluctuate between days. You win more some days.
+    // NOTE: For characters without a fixed wage, this may fluctuate between days due to random variations.
+    //  Depending on how far from the maximum they are they could get a lower cap one day and not get money, but the
+    //  next day they could get a higher cap and get money.
     int maxSavings = wages * kMaxSavingsMultiplier;
     int newMoney = (std::min)(currentMoney + wages, maxSavings);
 
