@@ -3,24 +3,24 @@
 // Included inline by FixShoppingWages.cpp
 // -----------------------------------------------------------------------
 
-// Set to false for production. Disables all diagnostic logging and snapshotting.
-static const bool kVerboseDebugLogging = true;
-// Set to true to log Verbose debugs, but only for relevant characters, skipping new and removed.
-static const bool kLimitVerboseDebugLogging = true;
-// Set to true to listen for debug hotkeys and print their respective response.
-static const bool kDeveloperDebug = true;
+// Enables excessively diagnostic logging and snapshotting.
+#define kVerboseDebugLogging gConfig.verboseDebugLogging
+// Tune down the excessive logging and only log the most important events.
+#define kLimitVerboseDebugLogging gConfig.limitVerboseDebugLogging
+// Enable direct character debugging. Allows injecting money into a character.
+#define kDeveloperDebug gConfig.developerDebug
 
 // -----------------------------------------------------------------------
 // Hotkey edge-detection state
 // -----------------------------------------------------------------------
-static bool g_ctrlTPressedLast = false;      // CTRL+T
-static bool g_ctrlShiftTPressedLast = false; // CTRL+SHIFT+T
-static bool g_ctrlRPressedLast = false;      // CTRL+R
+static bool gCtrlTPressedLast = false;      // CTRL+T
+static bool gCtrlShiftTPressedLast = false; // CTRL+SHIFT+T
+static bool gCtrlRPressedLast = false;      // CTRL+R
 
 // -----------------------------------------------------------------------
 // Day transition tracking
 // -----------------------------------------------------------------------
-static int g_previousDay = -1;
+static int gPreviousDay = -1;
 
 // -----------------------------------------------------------------------
 // Hourly money snapshot tracking
@@ -31,8 +31,8 @@ struct HourlyMoneyEntry
     int money;
 };
 
-static std::map<hand, HourlyMoneyEntry> g_previousMoneySnapshot;
-static int g_previousHour = -1;
+static std::map<hand, HourlyMoneyEntry> gPreviousMoneySnapshot;
+static int gPreviousHour = -1;
 
 // -----------------------------------------------------------------------
 // Snapshot of Character fields to compare before/after wage update
@@ -235,15 +235,15 @@ static void LogDailyUpdatesEnd(int nonPlayerCharacterCount, int changedCharacter
 static void LogDayTransition()
 {
     int currentDay = static_cast<int>(ou->getTimeStamp_inGameHours().getTotalDays());
-    if (currentDay != g_previousDay)
+    if (currentDay != gPreviousDay)
     {
         double totalHours = ou->getTimeStamp_inGameHours().getTotalHours();
         std::stringstream message;
         message << "[updateUT] day transition: "
-                << "day " << g_previousDay << " -> " << currentDay << " "
+                << "day " << gPreviousDay << " -> " << currentDay << " "
                 << "(totalHours=" << totalHours << ")";
         DebugLog(message.str().c_str());
-        g_previousDay = currentDay;
+        gPreviousDay = currentDay;
     }
 }
 
@@ -255,7 +255,7 @@ static void LogHourlySnapshotDiff()
     double totalHours = ou->getTimeStamp_inGameHours().getTotalHours();
     int currentHour = static_cast<int>(totalHours);
 
-    if (currentHour == g_previousHour) { return; }
+    if (currentHour == gPreviousHour) { return; }
 
     typedef ogre_unordered_set<Character *>::type CharacterSet;
     const CharacterSet &characterList = ou->getCharacterUpdateList();
@@ -275,13 +275,13 @@ static void LogHourlySnapshotDiff()
         }
     }
 
-    if (g_previousHour != -1)
+    if (gPreviousHour != -1)
     {
         int diffCount = 0;
 
         // Diff: check previous entries against current
-        for (std::map<hand, HourlyMoneyEntry>::const_iterator previousIterator = g_previousMoneySnapshot.begin();
-             previousIterator != g_previousMoneySnapshot.end(); ++previousIterator)
+        for (std::map<hand, HourlyMoneyEntry>::const_iterator previousIterator = gPreviousMoneySnapshot.begin();
+             previousIterator != gPreviousMoneySnapshot.end(); ++previousIterator)
         {
             std::map<hand, HourlyMoneyEntry>::const_iterator currentIterator =
                 currentSnapshot.find(previousIterator->first);
@@ -317,7 +317,7 @@ static void LogHourlySnapshotDiff()
         for (std::map<hand, HourlyMoneyEntry>::const_iterator currentIterator = currentSnapshot.begin();
              currentIterator != currentSnapshot.end(); ++currentIterator)
         {
-            if (g_previousMoneySnapshot.find(currentIterator->first) == g_previousMoneySnapshot.end())
+            if (gPreviousMoneySnapshot.find(currentIterator->first) == gPreviousMoneySnapshot.end())
             {
                 if (kLimitVerboseDebugLogging)
                 {
@@ -341,8 +341,8 @@ static void LogHourlySnapshotDiff()
         }
     }
 
-    g_previousMoneySnapshot = currentSnapshot;
-    g_previousHour = currentHour;
+    gPreviousMoneySnapshot = currentSnapshot;
+    gPreviousHour = currentHour;
 }
 
 // -----------------------------------------------------------------------
@@ -360,7 +360,7 @@ static void LogHotkeys()
     const bool controlR = controlKeyDown && !shiftKeyDown && rKeyDown;
 
     // --- CTRL+T: print NPC money + wages + money min/max ----------------
-    if (controlT && !g_ctrlTPressedLast)
+    if (controlT && !gCtrlTPressedLast)
     {
         Character *selectedCharacter = ou->player->selectedObject.getCharacter();
         if (selectedCharacter != nullptr)
@@ -386,10 +386,10 @@ static void LogHotkeys()
             DebugLog("CTRL+T: no character selected");
         }
     }
-    g_ctrlTPressedLast = controlT;
+    gCtrlTPressedLast = controlT;
 
     // --- CTRL+SHIFT+T: add 2000 money, then log ------------------------
-    if (controlShiftT && !g_ctrlShiftTPressedLast)
+    if (controlShiftT && !gCtrlShiftTPressedLast)
     {
         Character *selectedCharacter = ou->player->selectedObject.getCharacter();
         if (selectedCharacter != nullptr)
@@ -412,10 +412,10 @@ static void LogHotkeys()
             DebugLog("CTRL+SHIFT+T: no character selected");
         }
     }
-    g_ctrlShiftTPressedLast = controlShiftT;
+    gCtrlShiftTPressedLast = controlShiftT;
 
     // --- CTRL+R: dump all GameData fields ------------------------------
-    if (controlR && !g_ctrlRPressedLast)
+    if (controlR && !gCtrlRPressedLast)
     {
         Character *selectedCharacter = ou->player->selectedObject.getCharacter();
         if (selectedCharacter != nullptr)
@@ -511,5 +511,5 @@ static void LogHotkeys()
             DebugLog("CTRL+R: no character selected");
         }
     }
-    g_ctrlRPressedLast = controlR;
+    gCtrlRPressedLast = controlR;
 }

@@ -4,13 +4,31 @@
 // -----------------------------------------------------------------------
 
 // -----------------------------------------------------------------------
+// DllMain: resolve config file path (runs before startPlugin)
+// -----------------------------------------------------------------------
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
+{
+    if (fdwReason == DLL_PROCESS_ATTACH)
+    {
+        char dllPath[_MAX_PATH] = {0};
+        if (GetModuleFileNameA(hModule, dllPath, _MAX_PATH) > 0)
+        {
+            std::string fullPath = TrimAscii(std::string(dllPath));
+            size_t sep = fullPath.find_last_of("\\/");
+            if (sep != std::string::npos) { gSettingsPath = fullPath.substr(0, sep) + "\\" + kConfigFileName; }
+        }
+    }
+    return TRUE;
+}
+
+// -----------------------------------------------------------------------
 // Hook: GameWorld::dailyUpdates. Give NPCs their daily wage allowance
 // -----------------------------------------------------------------------
 static void (*GameWorld_dailyUpdates_originalFunction)(GameWorld *) = nullptr;
 
 void GameWorld_dailyUpdates_hook(GameWorld *thisWorld)
 {
-    if (kVerboseDebugLogging) { LogDailyUpdatesStart(thisWorld); }
+    if (gConfig.verboseDebugLogging) { LogDailyUpdatesStart(thisWorld); }
 
     GameWorld_dailyUpdates_originalFunction(thisWorld);
     // NOTE for others reading this:
@@ -20,16 +38,16 @@ void GameWorld_dailyUpdates_hook(GameWorld *thisWorld)
     //  overwritten by the dailyUpdate() function, which is not what we want. It also ruins the vendors in the game,
     //  rendering them close to broke.
 
-    // Resolve universal wage on first daily update that finds Dried Meat
-    const int driedMeatDefaultPrice = 78;
-    if (kUniversalWage == -1) { kUniversalWage = ResolveUniversalWage(); }
+    // Resolve universal wage from NPC inventory on the first daily update that finds Dried Meat
+    static int resolvedUniversalWage = -1;
+    if (resolvedUniversalWage == -1) { resolvedUniversalWage = ResolveUniversalWage(); }
 
     typedef ogre_unordered_set<Character *>::type CharacterSet;
     const CharacterSet &characterList = ou->getCharacterUpdateList();
 
     int nonPlayerCharacterCount = 0;
     int changedCharacterCount = 0;
-    int fallbackWage = (kUniversalWage != -1) ? kUniversalWage : driedMeatDefaultPrice;
+    int fallbackWage = (resolvedUniversalWage != -1) ? resolvedUniversalWage : gConfig.baseWageFallback;
 
     for (CharacterSet::const_iterator iterator = characterList.begin(); iterator != characterList.end(); ++iterator)
     {
@@ -37,13 +55,13 @@ void GameWorld_dailyUpdates_hook(GameWorld *thisWorld)
         if (character->isPlayerCharacter()) { continue; }
 
         DailyUpdateSnapshot beforeSnapshot;
-        if (kVerboseDebugLogging) { CaptureSnapshot(character, beforeSnapshot); }
+        if (gConfig.verboseDebugLogging) { CaptureSnapshot(character, beforeSnapshot); }
 
         GiveDailyWage(character, fallbackWage, changedCharacterCount, beforeSnapshot);
         ++nonPlayerCharacterCount;
     }
 
-    if (kVerboseDebugLogging) { LogDailyUpdatesEnd(nonPlayerCharacterCount, changedCharacterCount, thisWorld); }
+    if (gConfig.verboseDebugLogging) { LogDailyUpdatesEnd(nonPlayerCharacterCount, changedCharacterCount, thisWorld); }
 }
 
 // -----------------------------------------------------------------------
@@ -55,12 +73,12 @@ void PlayerInterface_updateUT_hook(PlayerInterface *thisPointer)
 {
     PlayerInterface_updateUT_originalFunction(thisPointer);
 
-    if (kVerboseDebugLogging)
+    if (gConfig.verboseDebugLogging)
     {
         LogDayTransition();
         LogHourlySnapshotDiff();
     }
-    if (kDeveloperDebug) { LogHotkeys(); }
+    if (gConfig.developerDebug) { LogHotkeys(); }
 }
 
 // -----------------------------------------------------------------------
@@ -68,6 +86,20 @@ void PlayerInterface_updateUT_hook(PlayerInterface *thisPointer)
 // -----------------------------------------------------------------------
 __declspec(dllexport) void startPlugin()
 {
+    DebugLog("FixShoppingWages: startPlugin()");
+
+    LoadConfigState();
+    if (gConfigNeedsWriteBack)
+    {
+        if (!SaveConfigState()) { ErrorLog("FixShoppingWages WARN: failed to persist normalized mod-config.json"); }
+    }
+
+    if (!gConfig.enabled)
+    {
+        DebugLog("FixShoppingWages INFO: disabled by config; no hooks installed");
+        return;
+    }
+
     if (KenshiLib::SUCCESS != KenshiLib::AddHook(
                                   KenshiLib::GetRealAddress(&PlayerInterface::updateUT), PlayerInterface_updateUT_hook,
                                   &PlayerInterface_updateUT_originalFunction
@@ -85,4 +117,12 @@ __declspec(dllexport) void startPlugin()
         ErrorLog("Could not hook GameWorld::dailyUpdates");
         return;
     }
+
+    std::stringstream info;
+    info << "FixShoppingWages INFO: initialized enabled=" << (gConfig.enabled ? "true" : "false")
+         << " baseWageFallback=" << gConfig.baseWageFallback << " maxSavingsMultiplier=" << gConfig.maxSavingsMultiplier
+         << " verboseDebugLogging=" << (gConfig.verboseDebugLogging ? "true" : "false")
+         << " limitVerboseDebugLogging=" << (gConfig.limitVerboseDebugLogging ? "true" : "false")
+         << " developerDebug=" << (gConfig.developerDebug ? "true" : "false");
+    DebugLog(info.str().c_str());
 }
