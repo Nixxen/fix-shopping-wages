@@ -91,6 +91,33 @@ static int ResolveUniversalWage()
 }
 
 // -----------------------------------------------------------------------
+// Give an NPC their daily wage allowance
+// -----------------------------------------------------------------------
+static void GiveDailyWage(Character *character, int fallbackWage, int &changedCharacterCount,
+                           const DailyUpdateSnapshot &beforeSnapshot)
+{
+    int wages = LookupGameDataInteger(character->data, "wages", 0);
+
+    if (wages == 0)
+    {
+        int minMoney = LookupGameDataInteger(character->data, "money min", 0);
+        int maxMoney = LookupGameDataInteger(character->data, "money max", 0);
+        if (maxMoney > minMoney) { wages = minMoney + (std::rand() % (maxMoney - minMoney + 1)); }
+        if (wages == 0) { wages = fallbackWage; }
+    }
+
+    int currentMoney = character->getMoney();
+    // NOTE: For characters without a fixed wage, this may fluctuate between days. You win more some days.
+    int maxSavings = wages * kMaxSavingsMultiplier;
+    int newMoney = (std::min)(currentMoney + wages, maxSavings);
+
+    int moneyToGive = newMoney - currentMoney;
+    if (moneyToGive > 0) { character->takeMoney(-moneyToGive); }
+
+    if (kVerboseDebugLogging) { LogDailyUpdateCharacterDiff(character, beforeSnapshot, changedCharacterCount); }
+}
+
+// -----------------------------------------------------------------------
 // Hook: GameWorld::dailyUpdates. Give NPCs their daily wage allowance
 // -----------------------------------------------------------------------
 static void (*GameWorld_dailyUpdates_originalFunction)(GameWorld *) = nullptr;
@@ -120,26 +147,7 @@ void GameWorld_dailyUpdates_hook(GameWorld *thisWorld)
         DailyUpdateSnapshot beforeSnapshot;
         if (kVerboseDebugLogging) { CaptureSnapshot(character, beforeSnapshot); }
 
-        int wages = LookupGameDataInteger(character->data, "wages", 0);
-
-        if (wages == 0)
-        {
-            int minMoney = LookupGameDataInteger(character->data, "money min", 0);
-            int maxMoney = LookupGameDataInteger(character->data, "money max", 0);
-            if (maxMoney > minMoney) { wages = minMoney + (std::rand() % (maxMoney - minMoney + 1)); }
-            if (wages == 0) { wages = fallbackWage; }
-        }
-
-        int currentMoney = character->getMoney();
-        // NOTE: For characters without a fixed wage, this may fluctuate between days. You win more some days.
-        int maxSavings = wages * kMaxSavingsMultiplier;
-        int newMoney = (std::min)(currentMoney + wages, maxSavings);
-
-        int moneyToGive = newMoney - currentMoney;
-        if (moneyToGive > 0) { character->takeMoney(-moneyToGive); }
-
-        if (kVerboseDebugLogging) { LogDailyUpdateCharacterDiff(character, beforeSnapshot, changedCharacterCount); }
-
+        GiveDailyWage(character, fallbackWage, changedCharacterCount, beforeSnapshot);
         ++nonPlayerCharacterCount;
     }
 
