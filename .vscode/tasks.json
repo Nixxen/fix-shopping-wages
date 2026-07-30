@@ -4,15 +4,13 @@
         {
             "label": "Build Release x64",
             "type": "process",
-            "command": "${env:MSBUILD_PATH}\\MSBuild.exe",
+            "command": "powershell",
             "args": [
-                "${fileBasenameNoExtension}.vcxproj",
-                "/p:Configuration=Release",
-                "/p:Platform=x64"
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/build.ps1"
             ],
-            "options": {
-                "cwd": "${fileDirname}"
-            },
             "group": {
                 "kind": "build",
                 "isDefault": true
