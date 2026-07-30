@@ -5,6 +5,8 @@
 
 // Set to false for production. Disables all diagnostic logging and snapshotting.
 static const bool kVerboseDebugLogging = true;
+// Set to true to log Verbose debugs, but only for relevant characters, skipping new and removed.
+static const bool kLimitVerboseDebugLogging = true;
 // Set to true to listen for debug hotkeys and print their respective response.
 static const bool kDeveloperDebug = true;
 
@@ -286,6 +288,11 @@ static void LogHourlySnapshotDiff()
 
             if (currentIterator == currentSnapshot.end())
             {
+                if (kLimitVerboseDebugLogging)
+                {
+                    // Skip logging for removed characters if limiting verbose logging
+                    continue;
+                }
                 std::stringstream message;
                 message << "[HOURLY DIFF] REMOVED: name=\"" << previousIterator->second.name << "\""
                         << " (id=\"" << previousIterator->first.toString() << "\")"
@@ -312,6 +319,11 @@ static void LogHourlySnapshotDiff()
         {
             if (g_previousMoneySnapshot.find(currentIterator->first) == g_previousMoneySnapshot.end())
             {
+                if (kLimitVerboseDebugLogging)
+                {
+                    // Skip logging for new characters if limiting verbose logging
+                    continue;
+                }
                 std::stringstream message;
                 message << "[HOURLY DIFF] NEW: name=\"" << currentIterator->second.name << "\""
                         << " (id=\"" << currentIterator->first.toString() << "\")"
