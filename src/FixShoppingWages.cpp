@@ -17,7 +17,9 @@
 #include <Windows.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
+#include <fstream>
 #include <map>
 #include <sstream>
 #include <string>
@@ -26,13 +28,44 @@
 // Configuration
 // -----------------------------------------------------------------------
 
-// TODO Make configuration configurable through Emkej's Mod Core
+#include "FixShoppingWagesSharedContracts.h"
 
-// Price of one Dried Meat per day. Resolved at runtime from an NPC's inventory.
-//  Initialized to -1 (sentinel); resolved on first dailyUpdate that finds Dried Meat.
-static int kUniversalWage = -1;
-// Maximum number of days' wages that an NPC can accumulate without spending any money.
-static const int kMaxSavingsMultiplier = 10;
+static const char *kPluginName = "Fix Shopping Wages";
+static const char *kConfigFileName = "mod-config.json";
+static const int kMaxBaseWageFallback = 100000;
+static const int kMaxMaxSavingsMultiplier = 1000;
+
+static PluginConfig gConfig = {
+    true, // enabled
+    true, // verboseDebugLogging
+    true, // limitVerboseDebugLogging
+    true, // developerDebug
+    78,   // baseWageFallback
+    10    // maxSavingsMultiplier
+};
+
+static std::string gSettingsPath;
+static bool gConfigNeedsWriteBack = false;
+
+// -----------------------------------------------------------------------
+// Config state management (needed before parser include for forward refs)
+// -----------------------------------------------------------------------
+static std::string TrimAscii(const std::string &value)
+{
+    size_t start = 0;
+    while (start < value.size() && std::isspace(static_cast<unsigned char>(value[start])) != 0)
+    {
+        ++start;
+    }
+
+    size_t end = value.size();
+    while (end > start && std::isspace(static_cast<unsigned char>(value[end - 1])) != 0)
+    {
+        --end;
+    }
+
+    return value.substr(start, end - start);
+}
 
 // -----------------------------------------------------------------------
 // Helper: look up an integer value from GameData::idata by key
@@ -58,7 +91,7 @@ static int LookupGameDataInteger(GameData *gameData, const std::string &key, int
 #include "FixShoppingWagesDebug.inl"
 
 // -----------------------------------------------------------------------
-// Resolve kUniversalWage at runtime by scanning NPC inventories for Dried Meat
+// Resolve universal wage at runtime by scanning NPC inventories for Dried Meat
 // -----------------------------------------------------------------------
 static int ResolveUniversalWage()
 {
@@ -125,13 +158,73 @@ static void GiveDailyWage(
     // NOTE: For characters without a fixed wage, this may fluctuate between days due to random variations.
     //  Depending on how far from the maximum they are they could get a lower cap one day and not get money, but the
     //  next day they could get a higher cap and get money.
-    int maxSavings = wages * kMaxSavingsMultiplier;
+    int maxSavings = wages * gConfig.maxSavingsMultiplier;
     int newMoney = (std::min)(currentMoney + wages, maxSavings);
 
     int moneyToGive = newMoney - currentMoney;
     if (moneyToGive > 0) { character->takeMoney(-moneyToGive); }
 
-    if (kVerboseDebugLogging) { LogDailyUpdateCharacterDiff(character, beforeSnapshot, changedCharacterCount); }
+    if (gConfig.verboseDebugLogging) { LogDailyUpdateCharacterDiff(character, beforeSnapshot, changedCharacterCount); }
+}
+
+// -----------------------------------------------------------------------
+// Config parsing and state helpers (inlined)
+// -----------------------------------------------------------------------
+#include "FixShoppingWagesConfigParsing.inl"
+
+static void LoadConfigState()
+{
+    gConfigNeedsWriteBack = false;
+    gConfig.enabled = true;
+    gConfig.verboseDebugLogging = true;
+    gConfig.limitVerboseDebugLogging = true;
+    gConfig.developerDebug = true;
+    gConfig.baseWageFallback = 78;
+    gConfig.maxSavingsMultiplier = 10;
+
+    if (gSettingsPath.empty()) { return; }
+
+    bool foundConfigFile = false;
+    bool needsWriteBack = false;
+    if (!ReadConfigFromFile(gSettingsPath, &gConfig, &foundConfigFile, &needsWriteBack))
+    {
+        ErrorLog("FixShoppingWages ERROR: failed to read mod-config.json; using defaults and rewriting file");
+        gConfigNeedsWriteBack = true;
+        return;
+    }
+
+    gConfigNeedsWriteBack = (!foundConfigFile) || needsWriteBack;
+    if (!foundConfigFile) { DebugLog("FixShoppingWages INFO: mod-config.json not found; using defaults"); }
+
+    std::stringstream info;
+    info << "FixShoppingWages INFO: loaded config enabled=" << (gConfig.enabled ? "true" : "false")
+         << " settingsPath=\"" << gSettingsPath << "\""
+         << " verboseDebugLogging=" << (gConfig.verboseDebugLogging ? "true" : "false")
+         << " limitVerboseDebugLogging=" << (gConfig.limitVerboseDebugLogging ? "true" : "false")
+         << " developerDebug=" << (gConfig.developerDebug ? "true" : "false")
+         << " baseWageFallback=" << gConfig.baseWageFallback
+         << " maxSavingsMultiplier=" << gConfig.maxSavingsMultiplier;
+    DebugLog(info.str().c_str());
+}
+
+static bool SaveConfigState()
+{
+    if (gSettingsPath.empty())
+    {
+        ErrorLog("FixShoppingWages ERROR: settings path is empty; cannot save mod-config.json");
+        return false;
+    }
+
+    if (!SaveConfigToFile(gSettingsPath, gConfig))
+    {
+        std::stringstream error;
+        error << "FixShoppingWages ERROR: failed to save mod-config.json path=\"" << gSettingsPath << "\"";
+        ErrorLog(error.str().c_str());
+        return false;
+    }
+
+    DebugLog("FixShoppingWages INFO: saved mod-config.json");
+    return true;
 }
 
 // -----------------------------------------------------------------------

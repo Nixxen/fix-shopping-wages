@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "verboseDebugLogging": false,
+  "limitVerboseDebugLogging": true,
+  "developerDebug": true,
+  "baseWageFallback": 78,
+  "maxSavingsMultiplier": 10
+}
