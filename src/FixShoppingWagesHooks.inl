@@ -91,7 +91,7 @@ void PlayerInterface_updateUT_hook(PlayerInterface *thisPointer)
 // -----------------------------------------------------------------------
 __declspec(dllexport) void startPlugin()
 {
-    DebugLog("FixShoppingWages: startPlugin()");
+    DebugLog("startPlugin()");
 
     LoadConfigState();
     if (gConfigNeedsWriteBack)
@@ -101,7 +101,7 @@ __declspec(dllexport) void startPlugin()
 
     if (!gConfig.enabled)
     {
-        DebugLog("FixShoppingWages INFO: disabled by config; no hooks installed");
+        DebugLog("Disabled by config; no hooks installed");
         return;
     }
 
@@ -124,7 +124,7 @@ __declspec(dllexport) void startPlugin()
     }
 
     std::stringstream info;
-    info << "FixShoppingWages INFO: initialized enabled=" << (gConfig.enabled ? "true" : "false")
+    info << "INFO: initialized enabled=" << (gConfig.enabled ? "true" : "false")
          << " baseWageFallback=" << gConfig.baseWageFallback << " maxSavingsMultiplier=" << gConfig.maxSavingsMultiplier
          << " verboseDebugLogging=" << (gConfig.verboseDebugLogging ? "true" : "false")
          << " limitVerboseDebugLogging=" << (gConfig.limitVerboseDebugLogging ? "true" : "false")
