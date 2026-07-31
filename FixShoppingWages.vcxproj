@@ -44,7 +44,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(KENSHILIB_DEPS_DIR);$(KENSHILIB_DIR)/Include;$(KENSHILIB_DIR)/Include/ogre;$(BOOST_INCLUDE_PATH);$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)tools\mod-hub-sdk\include;$(KENSHILIB_DEPS_DIR);$(KENSHILIB_DIR)/Include;$(KENSHILIB_DIR)/Include/ogre;$(BOOST_INCLUDE_PATH);$(IncludePath)</IncludePath>
     <LibraryPath>$(BOOST_ROOT)/stage/lib;$(KENSHILIB_DIR)/Libraries/;$(LibraryPath)</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
