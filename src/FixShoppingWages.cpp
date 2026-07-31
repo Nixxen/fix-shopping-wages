@@ -5,6 +5,7 @@
 #include <kenshi/Character.h>
 #include <kenshi/GameData.h>
 #include <kenshi/GameWorld.h>
+#include <kenshi/RootObjectFactory.h>
 #include <kenshi/Globals.h>
 #include <kenshi/InputHandler.h>
 #include <kenshi/Inventory.h>
