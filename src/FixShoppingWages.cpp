@@ -182,9 +182,9 @@ static void LoadConfigState()
 {
     gConfigNeedsWriteBack = false;
     gConfig.enabled = true;
-    gConfig.verboseDebugLogging = true;
-    gConfig.limitVerboseDebugLogging = true;
-    gConfig.developerDebug = true;
+    gConfig.verboseDebugLogging = false;
+    gConfig.limitVerboseDebugLogging = false;
+    gConfig.developerDebug = false;
     gConfig.baseWageFallback = 78;
     gConfig.baseWageOverride = false;
     gConfig.baseWageOverrideValue = 78;
