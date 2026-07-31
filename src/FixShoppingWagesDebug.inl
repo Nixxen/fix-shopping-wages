@@ -347,7 +347,238 @@ static void LogHourlySnapshotDiff()
 }
 
 // -----------------------------------------------------------------------
-// Debug: hotkeys (CTRL+T, CTRL+SHIFT+T, CTRL+R)
+// Debug: hotkey action functions
+// -----------------------------------------------------------------------
+
+static void HotkeyLogCharacterMoney()
+{
+    Character *selectedCharacter = ou->player->selectedObject.getCharacter();
+    if (selectedCharacter != nullptr)
+    {
+        int currentMoney = selectedCharacter->getMoney();
+        GameData *characterData = selectedCharacter->data;
+        int wagesValue = LookupGameDataInteger(characterData, "wages", -1);
+        int moneyMin = LookupGameDataInteger(characterData, "money min", -1);
+        int moneyMax = LookupGameDataInteger(characterData, "money max", -1);
+
+        std::stringstream message;
+        message << "CTRL+T: "
+                << "name=\"" << selectedCharacter->getName() << "\" "
+                << "id=\"" << selectedCharacter->getHandle().toString() << "\" "
+                << "money=" << currentMoney << " "
+                << "wages=" << wagesValue << " "
+                << "moneyMin=" << moneyMin << " "
+                << "moneyMax=" << moneyMax;
+        DebugLog(message.str().c_str());
+    }
+    else
+    {
+        DebugLog("CTRL+T: no character selected");
+    }
+}
+
+static void HotkeyGiveMoney()
+{
+    Character *selectedCharacter = ou->player->selectedObject.getCharacter();
+    if (selectedCharacter != nullptr)
+    {
+        int moneyBefore = selectedCharacter->getMoney();
+        static const int kMoneyToGive = 2000;
+        selectedCharacter->takeMoney(-kMoneyToGive); // negative = give money
+        int moneyAfter = selectedCharacter->getMoney();
+
+        std::stringstream message;
+        message << "CTRL+SHIFT+T: "
+                << "name=\"" << selectedCharacter->getName() << "\" "
+                << "id=\"" << selectedCharacter->getHandle().toString() << "\" "
+                << "before=" << moneyBefore << " "
+                << "gave=" << kMoneyToGive << " "
+                << "after=" << moneyAfter;
+        DebugLog(message.str().c_str());
+    }
+    else
+    {
+        DebugLog("CTRL+SHIFT+T: no character selected");
+    }
+}
+
+static void HotkeyDumpCharacterGameData()
+{
+    Character *selectedCharacter = ou->player->selectedObject.getCharacter();
+    if (selectedCharacter != nullptr)
+    {
+        GameData *characterData = selectedCharacter->data;
+        if (characterData != nullptr)
+        {
+            std::stringstream headerMessage;
+
+            headerMessage << "CTRL+R: name=\"" << selectedCharacter->getName() << "\""
+                          << " type=" << static_cast<int>(characterData->type) << " stringID=\""
+                          << characterData->stringID << "\"";
+
+            DebugLog(headerMessage.str().c_str());
+
+            // -- integer fields (idata) --
+            {
+                typedef boost::unordered::unordered_map<
+                    std::string, int, boost::hash<std::string>, std::equal_to<std::string>,
+                    Ogre::STLAllocator<std::pair<const std::string, int>, Ogre::GeneralAllocPolicy>>
+                    IntegerDataMap;
+
+                IntegerDataMap &integerMap = characterData->idata;
+                for (IntegerDataMap::const_iterator iterator = integerMap.begin(); iterator != integerMap.end();
+                     ++iterator)
+                {
+                    std::stringstream lineMessage;
+                    lineMessage << "  [idata] " << iterator->first << " = " << iterator->second;
+                    DebugLog(lineMessage.str().c_str());
+                }
+            }
+
+            // -- float fields (fdata) --
+            {
+                typedef boost::unordered::unordered_map<
+                    std::string, float, boost::hash<std::string>, std::equal_to<std::string>,
+                    Ogre::STLAllocator<std::pair<const std::string, float>, Ogre::GeneralAllocPolicy>>
+                    FloatDataMap;
+
+                FloatDataMap &floatMap = characterData->fdata;
+                for (FloatDataMap::const_iterator iterator = floatMap.begin(); iterator != floatMap.end(); ++iterator)
+                {
+                    std::stringstream lineMessage;
+                    lineMessage << "  [fdata] " << iterator->first << " = " << iterator->second;
+                    DebugLog(lineMessage.str().c_str());
+                }
+            }
+
+            // -- string fields (sdata) --
+            {
+                typedef boost::unordered::unordered_map<
+                    std::string, std::string, boost::hash<std::string>, std::equal_to<std::string>,
+                    Ogre::STLAllocator<std::pair<const std::string, std::string>, Ogre::GeneralAllocPolicy>>
+                    StringDataMap;
+
+                StringDataMap &stringMap = characterData->sdata;
+                for (StringDataMap::const_iterator iterator = stringMap.begin(); iterator != stringMap.end();
+                     ++iterator)
+                {
+                    std::stringstream lineMessage;
+                    lineMessage << "  [sdata] " << iterator->first << " = \"" << iterator->second << "\"";
+                    DebugLog(lineMessage.str().c_str());
+                }
+            }
+
+            // -- bool fields (bdata) --
+            {
+                typedef boost::unordered::unordered_map<
+                    std::string, bool, boost::hash<std::string>, std::equal_to<std::string>,
+                    Ogre::STLAllocator<std::pair<const std::string, bool>, Ogre::GeneralAllocPolicy>>
+                    BoolDataMap;
+
+                BoolDataMap &boolMap = characterData->bdata;
+                for (BoolDataMap::const_iterator iterator = boolMap.begin(); iterator != boolMap.end(); ++iterator)
+                {
+                    std::stringstream lineMessage;
+                    lineMessage << "  [bdata] " << iterator->first << " = " << (iterator->second ? "true" : "false");
+                    DebugLog(lineMessage.str().c_str());
+                }
+            }
+
+            DebugLog("CTRL+R: -- end of GameData dump --");
+        }
+        else
+        {
+            DebugLog("CTRL+R: selected character has no GameData");
+        }
+    }
+    else
+    {
+        DebugLog("CTRL+R: no character selected");
+    }
+}
+
+static void HotkeyLookupDriedMeatPrice()
+{
+    // Dump static game data price for Dried Meat.
+    DebugLog("CTRL+SHIFT+R: looking up Dried Meat from ou->gamedata...");
+
+    const std::string kDriedMeatName = "Dried Meat";
+    GameData *itemData = ou->gamedata.getDataByName(kDriedMeatName, ITEM);
+
+    if (itemData == nullptr)
+    {
+        DebugLog("CTRL+SHIFT+R: could not find Dried Meat by name, trying by string ID...");
+        itemData = ou->gamedata.getData("46130-DriedMeat", ITEM);
+    }
+    if (itemData == nullptr)
+    {
+        DebugLog("CTRL+SHIFT+R: could not find Dried Meat in ou->gamedata by string ID, trying by numeric ID...");
+    }
+    else
+    {
+        std::stringstream headerMessage;
+        headerMessage << "CTRL+SHIFT+R: found GameData stringID=\"" << itemData->stringID
+                      << "\" type=" << static_cast<int>(itemData->type);
+        DebugLog(headerMessage.str().c_str());
+
+        // Read price from idata
+        typedef boost::unordered::unordered_map<
+            std::string, int, boost::hash<std::string>, std::equal_to<std::string>,
+            Ogre::STLAllocator<std::pair<const std::string, int>, Ogre::GeneralAllocPolicy>>
+            IntegerDataMap;
+
+        IntegerDataMap &integerMap = itemData->idata;
+        IntegerDataMap::const_iterator priceIter = integerMap.find("value");
+        if (priceIter != integerMap.end())
+        {
+            std::stringstream lineMessage;
+            lineMessage << "  [idata] value = " << priceIter->second << " (price)";
+            DebugLog(lineMessage.str().c_str());
+        }
+        else
+        {
+            DebugLog("  [idata] key \"value\" not found. Dumping all idata keys:");
+            for (IntegerDataMap::const_iterator iterator = integerMap.begin(); iterator != integerMap.end(); ++iterator)
+            {
+                std::stringstream lineMessage;
+                lineMessage << "  [idata] " << iterator->first << " = " << iterator->second;
+                DebugLog(lineMessage.str().c_str());
+            }
+        }
+    }
+    // Dump live item price for Dried Meat by spawning a temporary instance and reading its price.
+    DebugLog("CTRL+SHIFT+R: spawning temporary Dried Meat instance from GameData to read live price...");
+    if (itemData != nullptr)
+    {
+        Item *item = ou->theFactory->createItem(
+            itemData, // the GameData we looked up
+            hand(),   // null handle
+            nullptr,  // no weapon mesh override
+            nullptr,  // default material
+            -1,       // Assumption: default level
+            nullptr   // no faction uniform
+        );
+        if (item != nullptr)
+        {
+            int livePrice = item->getAvgPrice();
+            std::stringstream liveMsg;
+            liveMsg << "CTRL+SHIFT+R: spawned instance getAvgPrice() = " << livePrice;
+            DebugLog(liveMsg.str().c_str());
+            ou->destroy(item, false, "debug query");
+        }
+        else
+        {
+            DebugLog("CTRL+SHIFT+R: createItem returned NULL");
+        }
+    }
+    else
+    {
+        DebugLog("CTRL+SHIFT+R: no itemData to spawn from");
+    }
+}
+
+// -----------------------------------------------------------------------
+// Debug: hotkeys dispatch
 // -----------------------------------------------------------------------
 static void LogHotkeys()
 {
@@ -359,242 +590,17 @@ static void LogHotkeys()
     const bool controlT = controlKeyDown && !shiftKeyDown && tKeyDown;
     const bool controlShiftT = controlKeyDown && shiftKeyDown && tKeyDown;
     const bool controlR = controlKeyDown && !shiftKeyDown && rKeyDown;
+    const bool controlShiftR = controlKeyDown && shiftKeyDown && rKeyDown;
 
-    // --- CTRL+T: print NPC money + wages + money min/max ----------------
-    if (controlT && !gCtrlTPressedLast)
-    {
-        Character *selectedCharacter = ou->player->selectedObject.getCharacter();
-        if (selectedCharacter != nullptr)
-        {
-            int currentMoney = selectedCharacter->getMoney();
-            GameData *characterData = selectedCharacter->data;
-            int wagesValue = LookupGameDataInteger(characterData, "wages", -1);
-            int moneyMin = LookupGameDataInteger(characterData, "money min", -1);
-            int moneyMax = LookupGameDataInteger(characterData, "money max", -1);
-
-            std::stringstream message;
-            message << "CTRL+T: "
-                    << "name=\"" << selectedCharacter->getName() << "\" "
-                    << "id=\"" << selectedCharacter->getHandle().toString() << "\" "
-                    << "money=" << currentMoney << " "
-                    << "wages=" << wagesValue << " "
-                    << "moneyMin=" << moneyMin << " "
-                    << "moneyMax=" << moneyMax;
-            DebugLog(message.str().c_str());
-        }
-        else
-        {
-            DebugLog("CTRL+T: no character selected");
-        }
-    }
+    if (controlT && !gCtrlTPressedLast) { HotkeyLogCharacterMoney(); }
     gCtrlTPressedLast = controlT;
 
-    // --- CTRL+SHIFT+T: add 2000 money, then log ------------------------
-    if (controlShiftT && !gCtrlShiftTPressedLast)
-    {
-        Character *selectedCharacter = ou->player->selectedObject.getCharacter();
-        if (selectedCharacter != nullptr)
-        {
-            int moneyBefore = selectedCharacter->getMoney();
-            selectedCharacter->takeMoney(-2000); // negative = give money
-            int moneyAfter = selectedCharacter->getMoney();
-
-            std::stringstream message;
-            message << "CTRL+SHIFT+T: "
-                    << "name=\"" << selectedCharacter->getName() << "\" "
-                    << "id=\"" << selectedCharacter->getHandle().toString() << "\" "
-                    << "before=" << moneyBefore << " "
-                    << "gave=2000 "
-                    << "after=" << moneyAfter;
-            DebugLog(message.str().c_str());
-        }
-        else
-        {
-            DebugLog("CTRL+SHIFT+T: no character selected");
-        }
-    }
+    if (controlShiftT && !gCtrlShiftTPressedLast) { HotkeyGiveMoney(); }
     gCtrlShiftTPressedLast = controlShiftT;
 
-    // --- CTRL+R: dump all GameData fields ------------------------------
-    if (controlR && !gCtrlRPressedLast)
-    {
-        Character *selectedCharacter = ou->player->selectedObject.getCharacter();
-        if (selectedCharacter != nullptr)
-        {
-            GameData *characterData = selectedCharacter->data;
-            if (characterData != nullptr)
-            {
-                std::stringstream headerMessage;
-
-                headerMessage << "CTRL+R: name=\"" << selectedCharacter->getName() << "\""
-                              << " type=" << static_cast<int>(characterData->type) << " stringID=\""
-                              << characterData->stringID << "\"";
-
-                DebugLog(headerMessage.str().c_str());
-
-                // -- integer fields (idata) --
-                {
-                    typedef boost::unordered::unordered_map<
-                        std::string, int, boost::hash<std::string>, std::equal_to<std::string>,
-                        Ogre::STLAllocator<std::pair<const std::string, int>, Ogre::GeneralAllocPolicy>>
-                        IntegerDataMap;
-
-                    IntegerDataMap &integerMap = characterData->idata;
-                    for (IntegerDataMap::const_iterator iterator = integerMap.begin(); iterator != integerMap.end();
-                         ++iterator)
-                    {
-                        std::stringstream lineMessage;
-                        lineMessage << "  [idata] " << iterator->first << " = " << iterator->second;
-                        DebugLog(lineMessage.str().c_str());
-                    }
-                }
-
-                // -- float fields (fdata) --
-                {
-                    typedef boost::unordered::unordered_map<
-                        std::string, float, boost::hash<std::string>, std::equal_to<std::string>,
-                        Ogre::STLAllocator<std::pair<const std::string, float>, Ogre::GeneralAllocPolicy>>
-                        FloatDataMap;
-
-                    FloatDataMap &floatMap = characterData->fdata;
-                    for (FloatDataMap::const_iterator iterator = floatMap.begin(); iterator != floatMap.end();
-                         ++iterator)
-                    {
-                        std::stringstream lineMessage;
-                        lineMessage << "  [fdata] " << iterator->first << " = " << iterator->second;
-                        DebugLog(lineMessage.str().c_str());
-                    }
-                }
-
-                // -- string fields (sdata) --
-                {
-                    typedef boost::unordered::unordered_map<
-                        std::string, std::string, boost::hash<std::string>, std::equal_to<std::string>,
-                        Ogre::STLAllocator<std::pair<const std::string, std::string>, Ogre::GeneralAllocPolicy>>
-                        StringDataMap;
-
-                    StringDataMap &stringMap = characterData->sdata;
-                    for (StringDataMap::const_iterator iterator = stringMap.begin(); iterator != stringMap.end();
-                         ++iterator)
-                    {
-                        std::stringstream lineMessage;
-                        lineMessage << "  [sdata] " << iterator->first << " = \"" << iterator->second << "\"";
-                        DebugLog(lineMessage.str().c_str());
-                    }
-                }
-
-                // -- bool fields (bdata) --
-                {
-                    typedef boost::unordered::unordered_map<
-                        std::string, bool, boost::hash<std::string>, std::equal_to<std::string>,
-                        Ogre::STLAllocator<std::pair<const std::string, bool>, Ogre::GeneralAllocPolicy>>
-                        BoolDataMap;
-
-                    BoolDataMap &boolMap = characterData->bdata;
-                    for (BoolDataMap::const_iterator iterator = boolMap.begin(); iterator != boolMap.end(); ++iterator)
-                    {
-                        std::stringstream lineMessage;
-                        lineMessage << "  [bdata] " << iterator->first << " = "
-                                    << (iterator->second ? "true" : "false");
-                        DebugLog(lineMessage.str().c_str());
-                    }
-                }
-
-                DebugLog("CTRL+R: -- end of GameData dump --");
-            }
-            else
-            {
-                DebugLog("CTRL+R: selected character has no GameData");
-            }
-        }
-        else
-        {
-            DebugLog("CTRL+R: no character selected");
-        }
-    }
+    if (controlR && !gCtrlRPressedLast) { HotkeyDumpCharacterGameData(); }
     gCtrlRPressedLast = controlR;
 
-    // --- CTRL+SHIFT+R: look up Dried Meat price from GameData (no instance) ---
-    const bool controlShiftR = controlKeyDown && shiftKeyDown && rKeyDown;
-    if (controlShiftR && !gCtrlShiftRPressedLast)
-    {
-        // Dump static game data price for Dried Meat.
-        DebugLog("CTRL+SHIFT+R: looking up Dried Meat from ou->gamedata...");
-
-        const std::string kDriedMeatName = "Dried Meat";
-        GameData *itemData = ou->gamedata.getDataByName(kDriedMeatName, ITEM);
-
-        if (itemData == nullptr)
-        {
-            DebugLog("CTRL+SHIFT+R: could not find Dried Meat by name, trying by string ID...");
-            itemData = ou->gamedata.getData("46130-DriedMeat", ITEM);
-        }
-        if (itemData == nullptr)
-        {
-            DebugLog("CTRL+SHIFT+R: could not find Dried Meat in ou->gamedata by string ID, trying by numeric ID...");
-        }
-        else
-        {
-            std::stringstream headerMessage;
-            headerMessage << "CTRL+SHIFT+R: found GameData stringID=\"" << itemData->stringID
-                          << "\" type=" << static_cast<int>(itemData->type);
-            DebugLog(headerMessage.str().c_str());
-
-            // Read price from idata
-            typedef boost::unordered::unordered_map<
-                std::string, int, boost::hash<std::string>, std::equal_to<std::string>,
-                Ogre::STLAllocator<std::pair<const std::string, int>, Ogre::GeneralAllocPolicy>>
-                IntegerDataMap;
-
-            IntegerDataMap &integerMap = itemData->idata;
-            IntegerDataMap::const_iterator priceIter = integerMap.find("value");
-            if (priceIter != integerMap.end())
-            {
-                std::stringstream lineMessage;
-                lineMessage << "  [idata] value = " << priceIter->second << " (price)";
-                DebugLog(lineMessage.str().c_str());
-            }
-            else
-            {
-                DebugLog("  [idata] key \"value\" not found. Dumping all idata keys:");
-                for (IntegerDataMap::const_iterator iterator = integerMap.begin(); iterator != integerMap.end();
-                     ++iterator)
-                {
-                    std::stringstream lineMessage;
-                    lineMessage << "  [idata] " << iterator->first << " = " << iterator->second;
-                    DebugLog(lineMessage.str().c_str());
-                }
-            }
-        }
-        // Dump live item price for Dried Meat by spawning a temporary instance and reading its price.
-        DebugLog("CTRL+SHIFT+R: spawning temporary Dried Meat instance from GameData to read live price...");
-        if (itemData != nullptr)
-        {
-            Item *item = ou->theFactory->createItem(
-                itemData, // the GameData we looked up
-                hand(),   // null handle
-                nullptr,  // no weapon mesh override
-                nullptr,  // default material
-                -1,       // default level
-                nullptr   // no faction uniform
-            );
-            if (item != nullptr)
-            {
-                int livePrice = item->getAvgPrice();
-                std::stringstream liveMsg;
-                liveMsg << "CTRL+SHIFT+R: spawned instance getAvgPrice() = " << livePrice;
-                DebugLog(liveMsg.str().c_str());
-                ou->destroy(item, false, "debug query");
-            }
-            else
-            {
-                DebugLog("CTRL+SHIFT+R: createItem returned NULL");
-            }
-        }
-        else
-        {
-            DebugLog("CTRL+SHIFT+R: no itemData to spawn from");
-        }
-    }
+    if (controlShiftR && !gCtrlShiftRPressedLast) { HotkeyLookupDriedMeatPrice(); }
     gCtrlShiftRPressedLast = controlShiftR;
 }
