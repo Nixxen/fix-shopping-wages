@@ -16,6 +16,7 @@
 static bool gCtrlTPressedLast = false;      // CTRL+T
 static bool gCtrlShiftTPressedLast = false; // CTRL+SHIFT+T
 static bool gCtrlRPressedLast = false;      // CTRL+R
+static bool gCtrlShiftRPressedLast = false; // CTRL+SHIFT+R
 
 // -----------------------------------------------------------------------
 // Day transition tracking
@@ -512,4 +513,88 @@ static void LogHotkeys()
         }
     }
     gCtrlRPressedLast = controlR;
+
+    // --- CTRL+SHIFT+R: look up Dried Meat price from GameData (no instance) ---
+    const bool controlShiftR = controlKeyDown && shiftKeyDown && rKeyDown;
+    if (controlShiftR && !gCtrlShiftRPressedLast)
+    {
+        // Dump static game data price for Dried Meat.
+        DebugLog("CTRL+SHIFT+R: looking up Dried Meat from ou->gamedata...");
+
+        const std::string kDriedMeatName = "Dried Meat";
+        GameData *itemData = ou->gamedata.getDataByName(kDriedMeatName, ITEM);
+
+        if (itemData == nullptr)
+        {
+            DebugLog("CTRL+SHIFT+R: could not find Dried Meat by name, trying by string ID...");
+            itemData = ou->gamedata.getData("46130-DriedMeat", ITEM);
+        }
+        if (itemData == nullptr)
+        {
+            DebugLog("CTRL+SHIFT+R: could not find Dried Meat in ou->gamedata by string ID, trying by numeric ID...");
+        }
+        else
+        {
+            std::stringstream headerMessage;
+            headerMessage << "CTRL+SHIFT+R: found GameData stringID=\"" << itemData->stringID
+                          << "\" type=" << static_cast<int>(itemData->type);
+            DebugLog(headerMessage.str().c_str());
+
+            // Read price from idata
+            typedef boost::unordered::unordered_map<
+                std::string, int, boost::hash<std::string>, std::equal_to<std::string>,
+                Ogre::STLAllocator<std::pair<const std::string, int>, Ogre::GeneralAllocPolicy>>
+                IntegerDataMap;
+
+            IntegerDataMap &integerMap = itemData->idata;
+            IntegerDataMap::const_iterator priceIter = integerMap.find("value");
+            if (priceIter != integerMap.end())
+            {
+                std::stringstream lineMessage;
+                lineMessage << "  [idata] value = " << priceIter->second << " (price)";
+                DebugLog(lineMessage.str().c_str());
+            }
+            else
+            {
+                DebugLog("  [idata] key \"value\" not found. Dumping all idata keys:");
+                for (IntegerDataMap::const_iterator iterator = integerMap.begin(); iterator != integerMap.end();
+                     ++iterator)
+                {
+                    std::stringstream lineMessage;
+                    lineMessage << "  [idata] " << iterator->first << " = " << iterator->second;
+                    DebugLog(lineMessage.str().c_str());
+                }
+            }
+        }
+        // Dump live item price for Dried Meat by spawning a temporary instance and reading its price.
+        DebugLog("CTRL+SHIFT+R: spawning temporary Dried Meat instance from GameData to read live price...");
+        if (itemData != nullptr)
+        {
+            Item *item = ou->theFactory->createItem(
+                itemData, // the GameData we looked up
+                hand(),   // null handle
+                nullptr,  // no weapon mesh override
+                nullptr,  // default material
+                -1,       // default level
+                nullptr   // no faction uniform
+            );
+            if (item != nullptr)
+            {
+                int livePrice = item->getAvgPrice();
+                std::stringstream liveMsg;
+                liveMsg << "CTRL+SHIFT+R: spawned instance getAvgPrice() = " << livePrice;
+                DebugLog(liveMsg.str().c_str());
+                ou->destroy(item, false, "debug query");
+            }
+            else
+            {
+                DebugLog("CTRL+SHIFT+R: createItem returned NULL");
+            }
+        }
+        else
+        {
+            DebugLog("CTRL+SHIFT+R: no itemData to spawn from");
+        }
+    }
+    gCtrlShiftRPressedLast = controlShiftR;
 }
