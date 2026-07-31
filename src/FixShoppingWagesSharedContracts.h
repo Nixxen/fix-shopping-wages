@@ -9,6 +9,8 @@ struct PluginConfig
     bool limitVerboseDebugLogging;
     bool developerDebug;
     int baseWageFallback;
+    bool baseWageOverride;
+    int baseWageOverrideValue;
     int maxSavingsMultiplier;
 };
 
@@ -25,6 +27,11 @@ struct ConfigParseDiagnostics
     bool foundBaseWageFallback;
     bool invalidBaseWageFallback;
     bool clampedBaseWageFallback;
+    bool foundBaseWageOverride;
+    bool invalidBaseWageOverride;
+    bool foundBaseWageOverrideValue;
+    bool invalidBaseWageOverrideValue;
+    bool clampedBaseWageOverrideValue;
     bool foundMaxSavingsMultiplier;
     bool invalidMaxSavingsMultiplier;
     bool clampedMaxSavingsMultiplier;

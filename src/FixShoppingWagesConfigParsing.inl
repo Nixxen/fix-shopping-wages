@@ -322,6 +322,11 @@ static void ResetConfigParseDiagnostics(ConfigParseDiagnostics *diagnostics)
     diagnostics->foundBaseWageFallback = false;
     diagnostics->invalidBaseWageFallback = false;
     diagnostics->clampedBaseWageFallback = false;
+    diagnostics->foundBaseWageOverride = false;
+    diagnostics->invalidBaseWageOverride = false;
+    diagnostics->foundBaseWageOverrideValue = false;
+    diagnostics->invalidBaseWageOverrideValue = false;
+    diagnostics->clampedBaseWageOverrideValue = false;
     diagnostics->foundMaxSavingsMultiplier = false;
     diagnostics->invalidMaxSavingsMultiplier = false;
     diagnostics->clampedMaxSavingsMultiplier = false;
@@ -439,6 +444,40 @@ static bool ParseConfigJson(const std::string &body, PluginConfig *configOut, Co
                 if (!SkipJsonValue(body, &pos)) { return RecordConfigSyntaxError(diagnostics, pos); }
             }
         }
+        else if (key == "baseWageOverride")
+        {
+            bool parsedBool = false;
+            size_t valuePos = pos;
+            if (ParseJsonBoolValue(body, &valuePos, &parsedBool))
+            {
+                diagnostics->foundBaseWageOverride = true;
+                configOut->baseWageOverride = parsedBool;
+                pos = valuePos;
+            }
+            else
+            {
+                diagnostics->invalidBaseWageOverride = true;
+                if (!SkipJsonValue(body, &pos)) { return RecordConfigSyntaxError(diagnostics, pos); }
+            }
+        }
+        else if (key == "baseWageOverrideValue")
+        {
+            int parsedInt = 0;
+            bool clamped = false;
+            size_t valuePos = pos;
+            if (ParseJsonUnsignedIntValue(body, &valuePos, kMaxBaseWageOverrideValue, &parsedInt, &clamped))
+            {
+                diagnostics->foundBaseWageOverrideValue = true;
+                diagnostics->clampedBaseWageOverrideValue = diagnostics->clampedBaseWageOverrideValue || clamped;
+                configOut->baseWageOverrideValue = parsedInt;
+                pos = valuePos;
+            }
+            else
+            {
+                diagnostics->invalidBaseWageOverrideValue = true;
+                if (!SkipJsonValue(body, &pos)) { return RecordConfigSyntaxError(diagnostics, pos); }
+            }
+        }
         else if (key == "maxSavingsMultiplier")
         {
             int parsedInt = 0;
@@ -547,6 +586,21 @@ ReadConfigFromFile(const std::string &configPath, PluginConfig *configOut, bool 
         needsWriteBack = true;
         ErrorLog("FixShoppingWages WARN: \"baseWageFallback\" exceeded max; clamped");
     }
+    if (!diagnostics.foundBaseWageOverride || diagnostics.invalidBaseWageOverride)
+    {
+        needsWriteBack = true;
+        ErrorLog("FixShoppingWages WARN: invalid/missing key \"baseWageOverride\"; using default");
+    }
+    if (!diagnostics.foundBaseWageOverrideValue || diagnostics.invalidBaseWageOverrideValue)
+    {
+        needsWriteBack = true;
+        ErrorLog("FixShoppingWages WARN: invalid/missing key \"baseWageOverrideValue\"; using default");
+    }
+    if (diagnostics.clampedBaseWageOverrideValue)
+    {
+        needsWriteBack = true;
+        ErrorLog("FixShoppingWages WARN: \"baseWageOverrideValue\" exceeded max; clamped");
+    }
     if (!diagnostics.foundMaxSavingsMultiplier || diagnostics.invalidMaxSavingsMultiplier)
     {
         needsWriteBack = true;
@@ -572,6 +626,8 @@ static bool SaveConfigToFile(const std::string &configPath, const PluginConfig &
     out << "  \"limitVerboseDebugLogging\": " << (config.limitVerboseDebugLogging ? "true" : "false") << ",\n";
     out << "  \"developerDebug\": " << (config.developerDebug ? "true" : "false") << ",\n";
     out << "  \"baseWageFallback\": " << config.baseWageFallback << ",\n";
+    out << "  \"baseWageOverride\": " << (config.baseWageOverride ? "true" : "false") << ",\n";
+    out << "  \"baseWageOverrideValue\": " << config.baseWageOverrideValue << ",\n";
     out << "  \"maxSavingsMultiplier\": " << config.maxSavingsMultiplier << "\n";
     out << "}\n";
 

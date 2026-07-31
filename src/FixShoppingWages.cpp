@@ -34,6 +34,7 @@ static const char *kPluginName = "Fix Shopping Wages";
 static const char *kConfigFileName = "mod-config.json";
 static const int kMaxBaseWageFallback = 100000;
 static const int kMaxMaxSavingsMultiplier = 1000;
+static const int kMaxBaseWageOverrideValue = 100000;
 
 static PluginConfig gConfig = {
     true, // enabled
@@ -41,6 +42,8 @@ static PluginConfig gConfig = {
     true, // limitVerboseDebugLogging
     true, // developerDebug
     78,   // baseWageFallback
+    false,// baseWageOverride
+    78,   // baseWageOverrideValue
     10    // maxSavingsMultiplier
 };
 
@@ -180,6 +183,8 @@ static void LoadConfigState()
     gConfig.limitVerboseDebugLogging = true;
     gConfig.developerDebug = true;
     gConfig.baseWageFallback = 78;
+    gConfig.baseWageOverride = false;
+    gConfig.baseWageOverrideValue = 78;
     gConfig.maxSavingsMultiplier = 10;
 
     if (gSettingsPath.empty()) { return; }
@@ -203,6 +208,8 @@ static void LoadConfigState()
          << " limitVerboseDebugLogging=" << (gConfig.limitVerboseDebugLogging ? "true" : "false")
          << " developerDebug=" << (gConfig.developerDebug ? "true" : "false")
          << " baseWageFallback=" << gConfig.baseWageFallback
+         << " baseWageOverride=" << (gConfig.baseWageOverride ? "true" : "false")
+         << " baseWageOverrideValue=" << gConfig.baseWageOverrideValue
          << " maxSavingsMultiplier=" << gConfig.maxSavingsMultiplier;
     DebugLog(info.str().c_str());
 }
