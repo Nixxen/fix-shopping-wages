@@ -39,10 +39,13 @@ void GameWorld_dailyUpdates_hook(GameWorld *thisWorld)
     //  rendering them close to broke.
 
     // Resolve universal wage: if override is active, use the override value directly;
-    // otherwise scan NPC inventories for Dried Meat on the first daily update.
-    static int resolvedUniversalWage = -1;
+    // otherwise get the wage from one Dried Meat (may fluctuate per day).
+    int resolvedUniversalWage = -1;
     if (gConfig.baseWageOverride) { resolvedUniversalWage = gConfig.baseWageOverrideValue; }
-    else if (resolvedUniversalWage == -1) { resolvedUniversalWage = ResolveUniversalWage(); }
+    else
+    {
+        resolvedUniversalWage = ResolveUniversalWage();
+    }
 
     typedef ogre_unordered_set<Character *>::type CharacterSet;
     const CharacterSet &characterList = ou->getCharacterUpdateList();

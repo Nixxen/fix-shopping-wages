@@ -5,13 +5,13 @@
 #include <kenshi/Character.h>
 #include <kenshi/GameData.h>
 #include <kenshi/GameWorld.h>
-#include <kenshi/RootObjectFactory.h>
 #include <kenshi/Globals.h>
 #include <kenshi/InputHandler.h>
 #include <kenshi/Inventory.h>
 #include <kenshi/Item.h>
 #include <kenshi/PlayerInterface.h>
 #include <kenshi/RootObjectBase.h>
+#include <kenshi/RootObjectFactory.h>
 #include <kenshi/util/TimeOfDay.h>
 
 #define WIN32_LEAN_AND_MEAN
@@ -38,14 +38,14 @@ static const int kMaxMaxSavingsMultiplier = 1000;
 static const int kMaxBaseWageOverrideValue = 100000;
 
 static PluginConfig gConfig = {
-    true, // enabled
-    true, // verboseDebugLogging
-    true, // limitVerboseDebugLogging
-    true, // developerDebug
-    78,   // baseWageFallback
-    false,// baseWageOverride
-    78,   // baseWageOverrideValue
-    10    // maxSavingsMultiplier
+    true,  // enabled
+    true,  // verboseDebugLogging
+    true,  // limitVerboseDebugLogging
+    true,  // developerDebug
+    78,    // baseWageFallback
+    false, // baseWageOverride
+    78,    // baseWageOverrideValue
+    10     // maxSavingsMultiplier
 };
 
 static std::string gSettingsPath;
@@ -95,36 +95,38 @@ static int LookupGameDataInteger(GameData *gameData, const std::string &key, int
 #include "FixShoppingWagesDebug.inl"
 
 // -----------------------------------------------------------------------
-// Resolve universal wage at runtime by scanning NPC inventories for Dried Meat
+// Resolve universal wage by spawning a Dried Meat instance and reading its price
 // -----------------------------------------------------------------------
 static int ResolveUniversalWage()
 {
-    typedef ogre_unordered_set<Character *>::type CharacterSet;
-    const CharacterSet &characterList = ou->getCharacterUpdateList();
-
-    for (CharacterSet::const_iterator iterator = characterList.begin(); iterator != characterList.end(); ++iterator)
+    GameData *itemData = ou->gamedata.getDataByName("Dried Meat", ITEM);
+    if (itemData == nullptr)
     {
-        Character *character = *iterator;
-        Inventory *inventory = character->getInventory();
-        if (inventory == nullptr) { continue; }
-
-        lektor<Item *> foodItems;
-        inventory->getAllItemsWithFunction(foodItems, ITEM_FOOD);
-
-        int itemCount = static_cast<int>(foodItems.size());
-        for (int index = 0; index < itemCount; ++index)
-        {
-            if (foodItems[index]->getName() == "Dried Meat")
-            {
-                int price = foodItems[index]->getAvgPrice();
-                std::stringstream message;
-                message << "Resolved Dried Meat price from NPC inventory: " << price;
-                DebugLog(message.str());
-                return price;
-            }
-        }
+        DebugLog("ResolveUniversalWage: could not find Dried Meat GameData");
+        return -1;
     }
-    return -1;
+
+    Item *item = ou->theFactory->createItem(
+        itemData,
+        hand(),  // null handle
+        nullptr, // no weapon mesh override
+        nullptr, // default material
+        -1,      // Assumption: default level of gear
+        nullptr  // no faction uniform
+    );
+    if (item == nullptr)
+    {
+        DebugLog("createItem for Dried Meat failed; cannot resolve universal wage");
+        return -1;
+    }
+
+    int price = item->getAvgPrice();
+    ou->destroy(item, false, "debug query");
+
+    std::stringstream message;
+    message << "Resolved Universal Wage from Dried Meat instance: " << price;
+    DebugLog(message.str());
+    return price;
 }
 
 // -----------------------------------------------------------------------
