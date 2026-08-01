@@ -1,6 +1,6 @@
 [h1]Fix Shopping Wages[/h1]
 
-Ever set up a shop counter only to hear "I can't afford that" within days? No more! Fix Shopping Wages gives most NPCs a daily allowance so they keep buying from player shops.
+Ever set up a shop counter only to hear "I can't afford that" within days? That's a known issue with Kenshi. Wages never refresh. No more! Fix Shopping Wages gives most NPCs their daily allowance so they keep buying from player shops.
 
 [b]How does it work?[/b]
 Each NPC's wage is pulled from their GameData, checked in this order:
@@ -40,7 +40,7 @@ For those that do not use Emkejs mod core, the JSON config file is in the mod fo
 [/list]
 
 [b]Recommended Mods[/b]
-Fix Shopping Wages was designed with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1581929438]Enhanced Shopping Economy[/url] by Sir_Fuzzles in mind. That mod adds wages and expanded shopping lists to many NPCs. Using both mods together, NPCs have both wages to spend and things to buy. Fix Shopping Wages works fine without it due to the fallbacks, but more shoppers means more profit (and let's be honest, seeing a squad of travelers purchase half your stock is fun).
+Fix Shopping Wages was designed with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1581929438]Enhanced Shopping Economy[/url] in mind. That mod adds wages and expanded shopping lists to many NPCs. Using both mods together, NPCs have both wages to spend and things to buy. Fix Shopping Wages works fine without it due to the fallbacks, but more shoppers means more profit (and let's be honest, seeing a squad of travelers purchase half your stock is fun).
 
 [b]Compatibility[/b]
 [list]
@@ -59,7 +59,7 @@ Fix Shopping Wages was designed with [url=https://steamcommunity.com/sharedfiles
 
 [b]Shout outs[/b]
 [list]
-[*]BFrizzleFoShizzle, creator of KenshiLib and RE_Kenshi
-[*]Emkej, creator of Emkejs-Mod-Core for Mod Hub and in-game settings UI
-[*]Sir_Fuzzles, creator of Enhanced Shopping Economy, which inspired this mod
+[*][url=https://steamcommunity.com/id/bmanatee]BFrizzleFoShizzle[/url], creator of KenshiLib and RE_Kenshi
+[*][url=https://steamcommunity.com/profiles/76561198014968620]Emkej[/url], creator of Emkejs-Mod-Core for Mod Hub and in-game settings UI
+[*][url=https://steamcommunity.com/id/matvey_traveller]Matvey Traveller[/url], creator of Enhanced Shopping Economy, which inspired this mod
 [/list]
