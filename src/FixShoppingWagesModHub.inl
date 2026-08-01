@@ -264,7 +264,7 @@ void EnsureModHubClientConfigured()
         &SetMaxSavingsMultiplierSetting
     };
 
-    static const char *kSectionDebugId = "debug";
+    static const char *kSectionDebugId = "advanced";
     static const char *kSectionDebugLabel = "Debug";
 
     static const emc::ModHubClientSettingRowV1 kModHubRows[] = {
