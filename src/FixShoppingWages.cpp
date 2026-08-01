@@ -238,6 +238,11 @@ static bool SaveConfigState()
 }
 
 // -----------------------------------------------------------------------
+// Emkej's Mod Core (Mod Hub) integration (inlined)
+// -----------------------------------------------------------------------
+#include "FixShoppingWagesModHub.inl"
+
+// -----------------------------------------------------------------------
 // Hooks and plugin entry point (inlined from FixShoppingWagesHooks.inl)
 // -----------------------------------------------------------------------
 #include "FixShoppingWagesHooks.inl"
