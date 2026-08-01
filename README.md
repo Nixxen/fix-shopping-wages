@@ -2,6 +2,10 @@
 
 A Kenshi RE_Kenshi plugin that gives NPCs a daily wage allowance so they can afford to shop at player stores. Each NPC's wage is determined by their GameData: a fixed wage value, a random range ("money min" / "money max"), or the local Dried Meat price as a universal baseline. If Dried Meat can't be resolved, a configurable fallback value is used. NPCs flagged for poverty by the base game are skipped.
 
+Get it from your preferred modding platform:
+- **Steam Workshop**: [Fix Shopping Wages (RE_Kenshi)](https://steamcommunity.com/sharedfiles/filedetails/?id=3775703318)
+- **NexusMods**: [TBD:Fix Shopping Wages](https://www.nexusmods.com/kenshi/mods/TBD)
+
 ## Features
 
 - **Daily wage injection** - Every NPC receives their configured wage each day, added to their current money up to a cap
