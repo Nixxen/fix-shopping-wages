@@ -178,6 +178,9 @@ static void GiveDailyWage(
 // -----------------------------------------------------------------------
 #include "FixShoppingWagesConfigParsing.inl"
 
+static const int kDriedMeatPriceOnWiki = 78; // https://kenshi.fandom.com/wiki/Dried_Meat
+static const int kDefaultMaxSavingsMultiplier = 10;
+
 static void LoadConfigState()
 {
     gConfigNeedsWriteBack = false;
@@ -185,10 +188,10 @@ static void LoadConfigState()
     gConfig.verboseDebugLogging = false;
     gConfig.limitVerboseDebugLogging = false;
     gConfig.developerDebug = false;
-    gConfig.baseWageFallback = 78;
+    gConfig.baseWageFallback = kDriedMeatPriceOnWiki;
     gConfig.baseWageOverride = false;
-    gConfig.baseWageOverrideValue = 78;
-    gConfig.maxSavingsMultiplier = 10;
+    gConfig.baseWageOverrideValue = 0; // Assume people want the base wage to be 0 if they are overriding it.
+    gConfig.maxSavingsMultiplier = kDefaultMaxSavingsMultiplier;
 
     if (gSettingsPath.empty()) { return; }
 
