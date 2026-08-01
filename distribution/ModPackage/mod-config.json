@@ -1,8 +1,10 @@
 {
-  "enabled": true,
-  "verboseDebugLogging": false,
-  "limitVerboseDebugLogging": true,
-  "developerDebug": true,
-  "baseWageFallback": 78,
-  "maxSavingsMultiplier": 10
+    "enabled": true,
+    "verboseDebugLogging": false,
+    "limitVerboseDebugLogging": false,
+    "developerDebug": false,
+    "baseWageFallback": 78,
+    "baseWageOverride": true,
+    "baseWageOverrideValue": 0,
+    "maxSavingsMultiplier": 10
 }
