@@ -130,4 +130,6 @@ __declspec(dllexport) void startPlugin()
          << " limitVerboseDebugLogging=" << (gConfig.limitVerboseDebugLogging ? "true" : "false")
          << " developerDebug=" << (gConfig.developerDebug ? "true" : "false");
     DebugLog(info.str().c_str());
+
+    FixShoppingWagesModHub_OnStartup();
 }
