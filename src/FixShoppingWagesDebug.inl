@@ -30,6 +30,9 @@ struct HourlyMoneyEntry
 {
     std::string name;
     int money;
+    int wages;
+    int moneyMin;
+    int moneyMax;
 };
 
 static std::map<hand, HourlyMoneyEntry> gPreviousMoneySnapshot;
@@ -255,6 +258,8 @@ static void LogHourlySnapshotDiff()
 {
     double totalHours = ou->getTimeStamp_inGameHours().getTotalHours();
     int currentHour = static_cast<int>(totalHours);
+    static const int kHoursPerDay = 24;
+    int dayHour = currentHour % kHoursPerDay;
 
     if (currentHour == gPreviousHour) { return; }
 
@@ -272,6 +277,9 @@ static void LogHourlySnapshotDiff()
             HourlyMoneyEntry entry;
             entry.name = character->getName();
             entry.money = character->getMoney();
+            entry.wages = LookupGameDataInteger(character->data, "wages", -1);
+            entry.moneyMin = LookupGameDataInteger(character->data, "money min", -1);
+            entry.moneyMax = LookupGameDataInteger(character->data, "money max", -1);
             currentSnapshot[characterHandle] = entry;
         }
     }
@@ -295,7 +303,8 @@ static void LogHourlySnapshotDiff()
                     continue;
                 }
                 std::stringstream message;
-                message << "[HOURLY DIFF] REMOVED: name=\"" << previousIterator->second.name << "\""
+                message << "[HOURLY DIFF] REMOVED: dayhour=" << dayHour << " name=\"" << previousIterator->second.name
+                        << "\""
                         << " (id=\"" << previousIterator->first.toString() << "\")"
                         << " had=" << previousIterator->second.money << " hour=" << currentHour;
                 DebugLog(message.str().c_str());
@@ -304,10 +313,12 @@ static void LogHourlySnapshotDiff()
             {
                 int delta = currentIterator->second.money - previousIterator->second.money;
                 std::stringstream message;
-                message << "[HOURLY DIFF] name=\"" << previousIterator->second.name << "\""
+                message << "[HOURLY DIFF] dayhour=" << dayHour << " name=\"" << previousIterator->second.name << "\""
                         << " (id=\"" << previousIterator->first.toString() << "\")"
                         << " " << previousIterator->second.money << " -> " << currentIterator->second.money
-                        << " (delta=" << delta << ")"
+                        << " (delta=" << delta << ", wages=" << currentIterator->second.wages
+                        << ", moneyMin=" << currentIterator->second.moneyMin
+                        << ", moneyMax=" << currentIterator->second.moneyMax << ")"
                         << " hour=" << currentHour;
                 DebugLog(message.str().c_str());
                 ++diffCount;
@@ -326,7 +337,8 @@ static void LogHourlySnapshotDiff()
                     continue;
                 }
                 std::stringstream message;
-                message << "[HOURLY DIFF] NEW: name=\"" << currentIterator->second.name << "\""
+                message << "[HOURLY DIFF] NEW: dayhour=" << dayHour << " name=\"" << currentIterator->second.name
+                        << "\""
                         << " (id=\"" << currentIterator->first.toString() << "\")"
                         << " money=" << currentIterator->second.money << " hour=" << currentHour;
                 DebugLog(message.str().c_str());
