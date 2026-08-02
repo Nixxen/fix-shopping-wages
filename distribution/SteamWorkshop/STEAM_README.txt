@@ -46,6 +46,7 @@ Fix Shopping Wages was designed with [url=https://steamcommunity.com/sharedfiles
 [list]
 [*]No special load order required beyond RE_Kenshi
 [*]Does not alter any game files
+[*]Works with the KEP shopping expansion, though some NPCs will get double wages.
 [*]If using Emkejs Mod Core, load it before this mod
 [*]Incompatible with mods that trigger the character daily update cycle (the base game leaves it disabled, likely on purpose)
 [/list]
