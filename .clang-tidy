@@ -5,7 +5,9 @@ Checks: >
   -modernize-use-trailing-return-type,
   -modernize-avoid-c-arrays,
   -modernize-return-braced-init-list,
+  -modernize-use-default-member-init,
   -modernize-use-using,
+  -modernize-loop-convert,
   readability-*
 CheckOptions:
   - key: readability-magic-numbers.IgnoredFloatingPointValues
