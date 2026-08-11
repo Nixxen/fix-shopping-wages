@@ -1,0 +1,34 @@
+#include <winres.h>
+#include "version.h"
+
+#define STRINGIZE2(x) #x
+#define STRINGIZE(x) STRINGIZE2(x)
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     FSW_VERSION_MAJOR, FSW_VERSION_MINOR, FSW_VERSION_PATCH, FSW_VERSION_BUILD
+PRODUCTVERSION  FSW_VERSION_MAJOR, FSW_VERSION_MINOR, FSW_VERSION_PATCH, FSW_VERSION_BUILD
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_DLL
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "FileDescription",  "FixShoppingWages (RE_Kenshi)"
+            VALUE "FileVersion",      STRINGIZE(FSW_VERSION_MAJOR) "." STRINGIZE(FSW_VERSION_MINOR) "." STRINGIZE(FSW_VERSION_PATCH) "." STRINGIZE(FSW_VERSION_BUILD)
+            VALUE "InternalName",     "FixShoppingWages"
+            VALUE "OriginalFilename", "FixShoppingWages.dll"
+            VALUE "ProductName",      "FixShoppingWages"
+            VALUE "ProductVersion",   STRINGIZE(FSW_VERSION_MAJOR) "." STRINGIZE(FSW_VERSION_MINOR) "." STRINGIZE(FSW_VERSION_PATCH) "." STRINGIZE(FSW_VERSION_BUILD)
+            VALUE "CompanyName",      "Nixxen"
+            VALUE "LegalCopyright",   "Copyright (c) 2026 Nixxen"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

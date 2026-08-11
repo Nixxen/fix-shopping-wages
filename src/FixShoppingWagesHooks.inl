@@ -1,3 +1,5 @@
+#include "version.h"
+
 // -----------------------------------------------------------------------
 // FixShoppingWagesHooks.inl. Hook implementations and plugin entry point
 // Included inline by FixShoppingWages.cpp
@@ -91,12 +93,12 @@ void PlayerInterface_updateUT_hook(PlayerInterface *thisPointer)
 // -----------------------------------------------------------------------
 __declspec(dllexport) void startPlugin()
 {
-    DebugLog("startPlugin()");
+    DebugLog("v" FSW_VERSION_STRING " loaded");
 
     LoadConfigState();
     if (gConfigNeedsWriteBack)
     {
-        if (!SaveConfigState()) { ErrorLog("FixShoppingWages WARN: failed to persist normalized mod-config.json"); }
+        if (!SaveConfigState()) { ErrorLog("WARN: failed to persist normalized mod-config.json"); }
     }
 
     if (!gConfig.enabled)

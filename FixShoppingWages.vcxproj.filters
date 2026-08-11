@@ -18,5 +18,11 @@
     <ClCompile Include="FixShoppingWages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ResourceCompile Include="FixShoppingWages.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

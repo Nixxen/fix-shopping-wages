@@ -11,6 +11,10 @@ x64/
 *.tmp
 *.log
 
+# Generated version files
+build_number.txt
+src/version_build.h
+
 # IDE
 .vs/
 .idea/
