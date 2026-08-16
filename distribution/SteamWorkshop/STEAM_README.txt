@@ -13,7 +13,7 @@ Each NPC's wage is pulled from their GameData, checked in this order:
 NPCs that are intentionally left poor by the base game are skipped and get nothing.
 Two additional notes:
 [list]
-[*] Some NPCs will get money, but now know how to spend them. In these cases, the mod will give them their dues up to their max limit. They will never spend their money, and will likely die rich.
+[*] Some NPCs will get money, but not know how to spend them. In these cases, the mod will give them their dues up to their max limit. They will never spend their money, and will likely die rich.
 [*] The money distributed for shopping is separate from money you can loot. A character may have tens of thousands of cats in spending money, but none of that is possible to loot. Likewise, if a character have cats for looting, that can not be spent on shopping.
 [/list]
 
